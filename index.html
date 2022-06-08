@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Locator</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/handlebars/4.7.7/handlebars.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto"
+      rel="stylesheet"
+    />
+    <link href="style.css" rel="stylesheet" />
+    <script src="whereswade.js"></script>
+    <script>
+      var markers = [];
+
+      const CONFIGURATION = {
+        mapOptions: {
+          center: { lat: 42.7137, lng: -82.4784 },
+          fullscreenControl: true,
+          mapTypeControl: false,
+          streetViewControl: false,
+          zoom: 5,
+          zoomControl: true,
+          maxZoom: 17,
+          mapTypeId: "satellite",
+        },
+        mapsApiKey: "AIzaSyDnrEZ9yK6sY17jTBtBzfoBtIZMdeZsQVI",
+        capabilities: {
+          input: true,
+          autocomplete: false,
+          directions: false,
+          distanceMatrix: false,
+          details: false,
+        },
+      };
+      function calcCrow(lat2, lon2) {
+        lat1 = 42.74979269922882;
+        lon1 = -82.4659650201271;
+
+        var R = 6371; // km
+        var dLat = toRad(lat2 - lat1);
+        var dLon = toRad(lon2 - lon1);
+        var lat1 = toRad(lat1);
+        var lat2 = toRad(lat2);
+
+        var a =
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.sin(dLon / 2) *
+            Math.sin(dLon / 2) *
+            Math.cos(lat1) *
+            Math.cos(lat2);
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        var d = R * c;
+        return d;
+      }
+      function calcCrowShip(lat2, lon2) {
+        lat1 = 42.693757610203626;
+        lon1 = -82.49990076449018;
+
+        var R = 6371; // km
+        var dLat = toRad(lat2 - lat1);
+        var dLon = toRad(lon2 - lon1);
+        var lat1 = toRad(lat1);
+        var lat2 = toRad(lat2);
+
+        var a =
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.sin(dLon / 2) *
+            Math.sin(dLon / 2) *
+            Math.cos(lat1) *
+            Math.cos(lat2);
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        var d = R * c;
+        return d;
+      }
+      function toRad(Value) {
+        return (Value * Math.PI) / 180;
+      }
+      const contentString1 =
+        '<div id="content">' +
+        '<div id="siteNotice">' +
+        "</div>" +
+        '<h1 id="firstHeading" class="firstHeading">Ship!!!</h1>' +
+        '<div id="bodyContent">' +
+        "<p> I saw it first this time!</p>" +
+        "</div>" +
+        "</div>";
+
+      let contentString2 =
+        '<div id="content">' +
+        '<div id="siteNotice">' +
+        "</div>" +
+        '<h1 id="firstHeading" class="firstHeading">Keep Trying!</h1>' +
+        '<div id="bodyContent">' +
+        "<p>You are roughly  ";
+      const contentString3 =
+        '<div id="content">' +
+        '<div id="siteNotice">' +
+        "</div>" +
+        '<h1 id="firstHeading" class="firstHeading">You got it!</h1>' +
+        '<div id="bodyContent">' +
+        "<p>See you at 7!</p>" +
+        "</div>" +
+        "</div>";
+      let infowindow = "";
+      showHints = false;
+      firstName = "test";
+      function handleCheck(cb) {
+        showHints = !showHints;
+      }
+      function initMap() {
+        var coll = document.getElementsByClassName("collapsible");
+        var i;
+
+        for (i = 0; i < coll.length; i++) {
+          coll[i].addEventListener("click", function () {
+            this.classList.toggle("active");
+            var content = this.nextElementSibling;
+            if (content.style.display === "block") {
+              content.style.display = "none";
+            } else {
+              content.style.display = "block";
+            }
+          });
+        }
+        var mapProp = {
+          center: new google.maps.LatLng(42.656658, -82.505607),
+          zoom: 16,
+          mapTypeId: "satellite",
+        };
+        var map = new google.maps.Map(
+          document.getElementById("gmp-map"),
+          mapProp
+        );
+
+        google.maps.event.addListener(map, "dblclick", function (event) {
+          if (markers[0]) {
+            markers[0].setMap(null);
+
+            markers = [];
+          }
+
+          const iconBase = "http://maps.google.com/mapfiles/kml/shapes/";
+          title = "Keep Guessing!";
+          cords2 = JSON.parse(JSON.stringify(event.latLng));
+          let ship = false;
+          contentString2 =
+            '<div id="content">' +
+            '<div id="siteNotice">' +
+            "</div>" +
+            '<h1 id="firstHeading" class="firstHeading">Keep Trying!</h1>' +
+            '<div id="bodyContent">' +
+            "<p>You are roughly  ";
+          if (calcCrowShip(cords2.lat, cords2.lng) * 1000 < 100) {
+            icon = "http://maps.google.com/mapfiles/kml/shapes/ferry.png";
+            title = "Ship!!!";
+            ship = true;
+            infowindow = new google.maps.InfoWindow({
+              content: contentString1,
+              position: event.latLng,
+            });
+          }
+          distance = calcCrow(cords2.lat, cords2.lng) * 1000;
+          goodMarker = "marina.png";
+          badMarker = "http://maps.google.com/mapfiles/kml/pal5/icon23.png";
+          if (!ship)
+            if (distance < 15) {
+              icon = iconBase + goodMarker;
+              title = "You got it! See you at 7!";
+              infowindow = new google.maps.InfoWindow({
+                content: contentString3,
+                position: event.latLng,
+              });
+            } else {
+              if (showHints) {
+                string = Math.round(distance) + " meters away";
+              } else {
+                string = "???? meters away";
+              }
+              contentString2 =
+                contentString2 + string + "</p>" + "</div> " + "</div>";
+              infowindow = new google.maps.InfoWindow({
+                content: contentString2,
+                position: event.latLng,
+              });
+              icon = badMarker;
+            }
+          placeMarker(map, event.latLng, icon);
+        });
+
+        function placeMarker(map, location) {
+          var marker = new google.maps.Marker({
+            position: location,
+            map: map,
+            icon: icon,
+            title: title,
+          });
+
+          infowindow.open(map, marker);
+          markers.push(marker);
+        }
+      }
+    </script>
+    <script id="locator-result-items-tmpl" type="text/x-handlebars-template">
+      <!-- marker.addListener("click", () => {
+      infowindow.open({
+        anchor: marker,
+        map,
+        shouldFocus: true,
+      });
+    }); -->
+      {{#each locations}}
+        <li class="location-result" data-location-index="{{index}}">
+          <button class="select-location">
+            <h2 class="name">{{title}}</h2>
+          </button>
+          <div class="address">{{address1}}<br />{{address2}}</div>
+        </li>
+      {{/each}}
+    </script>
+  </head>
+  <body>
+    <div id="map-container">
+      <div id="locations-panel">
+        <div id="locations-panel-list">
+          <header>
+            <h1 class="search-title">
+              Hi Kaley!
+              <br /><br />
+              I have put together a little google maps puzzle for you to find
+              the location and time of our date tomorrow!<br /><br />
+              Try to see how few clues can use to figure it out. Hopefully, the
+              first clues will be subtle, and by the last clue, the location
+              should be apparent. If you need a little extra help, check the box
+              at the bottom, and it will tell you how far away you are. Double
+              click on the map to take a guess! When you get it right, the icon
+              on the map will be a blue anchor. <br />
+              <br />
+              There is one secret spot on the map to double click with a special
+              icon and message. If you can find it and send me a picture of it,
+              there is a prize!!<br /><br />
+              Happy searching!
+            </h1>
+            <div class="search-input">
+              <div
+                id="search-overlay-search"
+                class="search-input-overlay search"
+              >
+                <button id="location-search-button"></button>
+              </div>
+            </div>
+          </header>
+          <div class="section-name" id="location-results-section-name"></div>
+          <div class="results">
+            <button type="button" class="collapsible">Open Clue 1</button>
+            <div class="content">
+              <p>You told me this is one of your favourite things.</p>
+            </div>
+            <button type="button" class="collapsible">Open Clue 2</button>
+            <div class="content">
+              <p>You might find it near the end of a long bike ride.</p>
+            </div>
+            <button type="button" class="collapsible">Open Clue 3</button>
+            <div class="content">
+              <p>
+                The general location shares a name with the elementary school I
+                went to the in the north end of Sarnia.
+              </p>
+            </div>
+            <button type="button" class="collapsible">Open Clue 4</button>
+            <div class="content">
+              <p>
+                I can count 5 of these favourite things of yours between my
+                house and the end of Port Lampton.
+              </p>
+            </div>
+            <button type="button" class="collapsible">Open Clue 5</button>
+            <div class="content">
+              <p>
+                The cloest hotel is named after somthing I never make on the
+                course.
+              </p>
+            </div>
+            <button type="button" class="collapsible">
+              Bonus clue for the hidden spot
+            </button>
+            <div class="content">
+              <p>This might be the only time I beat you to saying this!</p>
+            </div>
+            <div class="help">
+              <p>Click to see how far away your guesses are!</p>
+              <input onclick="handleCheck(this);" type="checkbox" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="gmp-map"></div>
+    </div>
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDnrEZ9yK6sY17jTBtBzfoBtIZMdeZsQVI&callback=initMap&libraries=places,geometry&solution_channel=GMP_QB_locatorplus_v4_cA"
+      async
+      defer
+    ></script>
+  </body>
+</html>
